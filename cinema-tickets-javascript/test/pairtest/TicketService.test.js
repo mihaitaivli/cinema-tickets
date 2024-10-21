@@ -4,6 +4,7 @@ import InvalidPurchaseException from "../../src/pairtest/lib/InvalidPurchaseExce
 
 describe("TicketService", () => {
   let ticketService;
+  const accountId = 1;
 
   beforeEach(() => {
     ticketService = new TicketService();
@@ -17,13 +18,13 @@ describe("TicketService", () => {
 
   it("should throw InvalidPurchaseException if ticketTypeRequests are not provided", () => {
     expect(() => {
-      ticketService.purchaseTickets(1);
+      ticketService.purchaseTickets(accountId);
     }).toThrow(InvalidPurchaseException);
   });
 
   it("should throw InvalidPurchaseException if ticketTypeRequests are invalid", () => {
     expect(() => {
-      ticketService.purchaseTickets(1, {});
+      ticketService.purchaseTickets(accountId, {});
     }).toThrow(InvalidPurchaseException);
   });
 });
