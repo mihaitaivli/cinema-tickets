@@ -1,15 +1,14 @@
 import TicketTypeRequest from "./lib/TicketTypeRequest.js";
 import InvalidPurchaseException from "./lib/InvalidPurchaseException.js";
+import CONFIG from "../../ticketServiceConfig.json"
+import TicketPaymentService from "../thirdparty/paymentgateway/TicketPaymentService.js";
 
 export default class TicketService {
-  /**
-   * Should only have private methods other than the one below.
-   */
+  #totalAmountToPay = 0;
+  #paymentService = new TicketPaymentService();
+  #noAdultTicketPresent = true;
 
   purchaseTickets(accountId, ...ticketTypeRequests) {
-    // throws InvalidPurchaseException
-
-    // basic checks
     if (!accountId) {
       throw new InvalidPurchaseException("An accountId is required");
     }
@@ -26,6 +25,28 @@ export default class TicketService {
           "ticketTypeRequests must be an instance of TicketTypeRequest"
         );
       }
+
+      if (ticketTypeRequest.getTicketType() === 'ADULT') {
+        this.#noAdultTicketPresent = false
+      }
     }
+
+    if (this.#noAdultTicketPresent) {
+      throw new InvalidPurchaseException(
+        "At least one adult ticket must be purchased"
+      )
+    }
+
+
+    // for (const ticket of ticketTypeRequests) {
+    //   this.#paymentService.makePayment(accountId, this.#totalAmountToPay)
+    // }
   }
+
+  // #calculateTotal(...ticketTypeRequests) {
+  //   var totalAmountToPay = 0
+  //   for (const ticket of ticketTypeRequests) {
+  //     this.#totalAmountToPay += ticket.
+  //   }
+  // }
 }
