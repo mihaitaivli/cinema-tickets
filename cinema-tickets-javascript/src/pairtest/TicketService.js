@@ -1,6 +1,6 @@
 import TicketTypeRequest from "./lib/TicketTypeRequest.js";
 import InvalidPurchaseException from "./lib/InvalidPurchaseException.js";
-import CONFIG from "../../ticketServiceConfig.json"
+import CONFIG from "./ticketServiceConfig.json"
 import TicketPaymentService from "../thirdparty/paymentgateway/TicketPaymentService.js";
 
 export default class TicketService {
