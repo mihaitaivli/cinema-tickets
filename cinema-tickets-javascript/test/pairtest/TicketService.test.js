@@ -24,104 +24,133 @@ describe('TicketService', () => {
     ticketService = new TicketService()
   })
 
-  // exceptions
-  it('should throw InvalidPurchaseException if accountId is not provided', () => {
-    const t = () => ticketService.purchaseTickets()
+  describe('exceptions', () => {
+    describe('accountId', () => {
+      it('should throw InvalidPurchaseException if not provided', () => {
+        const t = () => ticketService.purchaseTickets()
 
-    expect(t).toThrow(InvalidPurchaseException)
-    expect(t).toThrow('An accountId is required')
-  })
+        expect(t).toThrow(InvalidPurchaseException)
+        expect(t).toThrow('A valid accountId is required')
+      })
 
-  it('should throw InvalidPurchaseException if ticketTypeRequests are not provided', () => {
-    const t = () => ticketService.purchaseTickets(accountId)
+      it('should throw InvalidPurchaseException if is zero', () => {
+        const t = () => ticketService.purchaseTickets(0)
 
-    expect(t).toThrow(InvalidPurchaseException)
-    expect(t).toThrow('The array of ticketTypeRequests cannot be empty')
-  })
+        expect(t).toThrow(InvalidPurchaseException)
+        expect(t).toThrow('A valid accountId is required')
+      })
 
-  it('should throw InvalidPurchaseException if ticketTypeRequests are invalid', () => {
-    const t = () => ticketService.purchaseTickets(accountId, {})
+      it('should throw InvalidPurchaseException if negative', () => {
+        const t = () => ticketService.purchaseTickets(-2)
 
-    expect(t).toThrow(InvalidPurchaseException)
-    expect(t).toThrow(
-      'ticketTypeRequests must be an instance of TicketTypeRequest'
-    )
-  })
+        expect(t).toThrow(InvalidPurchaseException)
+        expect(t).toThrow('A valid accountId is required')
+      })
 
-  it('should throw InvalidPurchaseException if no adult ticket is purchased', () => {
-    const t = () =>
-      ticketService.purchaseTickets(accountId, SINGLE_INFANT_TICKET)
+      it('should throw InvalidPurchaseException if accountId is not a number', () => {
+        const t = () => ticketService.purchaseTickets('2')
 
-    expect(t).toThrow(InvalidPurchaseException)
-    expect(t).toThrow('At least one adult ticket must be purchased')
-  })
-
-  it(`should throw InvalidPurchaseException if more than ${MAX_NUMBER_OF_TICKETS} tickets are purchased`, () => {
-    const moreTicketsThanMaxAllowed = [
-      SINGLE_ADULT_TICKET,
-      new TicketTypeRequest('INFANT', MAX_NUMBER_OF_TICKETS),
-    ]
-    const t = () =>
-      ticketService.purchaseTickets(accountId, ...moreTicketsThanMaxAllowed)
-
-    expect(t).toThrow(
-      `The maximum number of tickets that can be purchased was exceeded. Max allowed:${MAX_NUMBER_OF_TICKETS}, requested:${moreTicketsThanMaxAllowed.length}`
-    )
-    expect(t).toThrow(InvalidPurchaseException)
-  })
-
-  // happy path
-  describe('should call the paymentService with the correct amount', () => {
-    beforeEach(() => {
-      spy = jest.spyOn(TicketPaymentService.prototype, 'makePayment')
+        expect(t).toThrow(InvalidPurchaseException)
+        expect(t).toThrow('A valid accountId is required')
+      })
     })
 
-    afterEach(() => {
-      spy.mockRestore()
+    describe('ticketTypeRequest', () => {
+      it('should throw InvalidPurchaseException if ticketTypeRequests are not provided', () => {
+        const t = () => ticketService.purchaseTickets(accountId)
+
+        expect(t).toThrow(InvalidPurchaseException)
+        expect(t).toThrow('The array of ticketTypeRequests cannot be empty')
+      })
+
+      it('should throw InvalidPurchaseException if ticketTypeRequests are invalid', () => {
+        const t = () => ticketService.purchaseTickets(accountId, {})
+
+        expect(t).toThrow(InvalidPurchaseException)
+        expect(t).toThrow(
+          'ticketTypeRequests must be an instance of TicketTypeRequest'
+        )
+      })
     })
 
-    it('for an adult', () => {
-      ticketService.purchaseTickets(accountId, SINGLE_ADULT_TICKET)
+    describe('business logic', () => {
+      it('should throw InvalidPurchaseException if no adult ticket is purchased', () => {
+        const t = () =>
+          ticketService.purchaseTickets(accountId, SINGLE_INFANT_TICKET)
 
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(accountId, PRICES.ADULT)
+        expect(t).toThrow(InvalidPurchaseException)
+        expect(t).toThrow('At least one adult ticket must be purchased')
+      })
+
+      it(`should throw InvalidPurchaseException if more than ${MAX_NUMBER_OF_TICKETS} tickets are purchased`, () => {
+        const moreTicketsThanMaxAllowed = [
+          SINGLE_ADULT_TICKET,
+          new TicketTypeRequest('INFANT', MAX_NUMBER_OF_TICKETS),
+        ]
+        const t = () =>
+          ticketService.purchaseTickets(accountId, ...moreTicketsThanMaxAllowed)
+
+        expect(t).toThrow(
+          `The maximum number of tickets that can be purchased was exceeded. Max allowed:${MAX_NUMBER_OF_TICKETS}, requested:${moreTicketsThanMaxAllowed.length}`
+        )
+        expect(t).toThrow(InvalidPurchaseException)
+      })
     })
+  })
 
-    it('for an adult and an infant', () => {
-      ticketService.purchaseTickets(
-        accountId,
-        SINGLE_ADULT_TICKET,
-        SINGLE_INFANT_TICKET
-      )
+  describe('integration', () => {
+    describe('should call the paymentService with the correct amount', () => {
+      beforeEach(() => {
+        spy = jest.spyOn(TicketPaymentService.prototype, 'makePayment')
+      })
 
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(accountId, PRICES.ADULT)
-    })
+      afterEach(() => {
+        spy.mockRestore()
+      })
 
-    it('for an adult and a child', () => {
-      ticketService.purchaseTickets(
-        accountId,
-        SINGLE_ADULT_TICKET,
-        SINGLE_CHILD_TICKET
-      )
+      it('for an adult', () => {
+        ticketService.purchaseTickets(accountId, SINGLE_ADULT_TICKET)
 
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(accountId, PRICES.ADULT + PRICES.CHILD)
-    })
+        expect(spy).toHaveBeenCalledTimes(1)
+        expect(spy).toHaveBeenCalledWith(accountId, PRICES.ADULT)
+      })
 
-    it('for a combination of adults, children and infants', () => {
-      const expectedAmount =
-        PRICES.ADULT * 5 + PRICES.CHILD * 3 + PRICES.INFANT * 5
+      it('for an adult and an infant', () => {
+        ticketService.purchaseTickets(
+          accountId,
+          SINGLE_ADULT_TICKET,
+          SINGLE_INFANT_TICKET
+        )
 
-      ticketService.purchaseTickets(
-        accountId,
-        FIVE_ADULT_TICKET,
-        THREE_CHILD_TICKETS,
-        FIVE_INFANT_TICKETS
-      )
+        expect(spy).toHaveBeenCalledTimes(1)
+        expect(spy).toHaveBeenCalledWith(accountId, PRICES.ADULT)
+      })
 
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(accountId, expectedAmount)
+      it('for an adult and a child', () => {
+        ticketService.purchaseTickets(
+          accountId,
+          SINGLE_ADULT_TICKET,
+          SINGLE_CHILD_TICKET
+        )
+
+        expect(spy).toHaveBeenCalledTimes(1)
+        expect(spy).toHaveBeenCalledWith(accountId, PRICES.ADULT + PRICES.CHILD)
+      })
+
+      it('for a combination of adults, children and infants', () => {
+        const expectedAmount =
+          PRICES.ADULT * 5 + PRICES.CHILD * 3 + PRICES.INFANT * 5
+
+        ticketService.purchaseTickets(
+          accountId,
+          FIVE_ADULT_TICKET,
+          THREE_CHILD_TICKETS,
+          FIVE_INFANT_TICKETS
+        )
+
+        expect(spy).toHaveBeenCalledTimes(1)
+        expect(spy).toHaveBeenCalledWith(accountId, expectedAmount)
+      })
     })
   })
 })

@@ -8,8 +8,9 @@ export default class TicketService {
   #ticketsCount = 0
 
   purchaseTickets(accountId, ...ticketTypeRequests) {
-    if (!accountId) {
-      throw new InvalidPurchaseException('An accountId is required')
+    if (!accountId || accountId < 0 || !Number.isSafeInteger(accountId)) {
+      this.#logErrors(`Error validating the accountId, got: ${accountId}`)
+      throw new InvalidPurchaseException('A valid accountId is required')
     }
 
     if (!ticketTypeRequests.length) {
@@ -62,5 +63,10 @@ export default class TicketService {
         (acc += PRICES[ticket.getTicketType()] * ticket.getNoOfTickets()),
       0
     )
+  }
+
+  // TODO: replace with an adequate logger/service
+  #logErrors(msg) {
+    console.info(new Date().toISOString(), msg)
   }
 }
