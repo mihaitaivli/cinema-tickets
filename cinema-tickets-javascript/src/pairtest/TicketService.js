@@ -4,10 +4,20 @@ import TicketPaymentService from '../thirdparty/paymentgateway/TicketPaymentServ
 import { PRICES, MAX_NUMBER_OF_TICKETS } from './ticketServiceConfig.js'
 export default class TicketService {
   #paymentService = new TicketPaymentService()
-  #noAdultTicketPresent = true
-  #ticketsCount = 0
+  #numberOfInfantTickets = 0
+  #numberOfChildTickets = 0
+  #numberOfAdultTickets = 0
+  #totalToPay = 0
 
   purchaseTickets(accountId, ...ticketTypeRequests) {
+    // validate the request
+    this.#validateRequestAndCalculateTotals(accountId, ...ticketTypeRequests)
+
+    // call the payment service
+    this.#paymentService.makePayment(accountId, this.#totalToPay)
+  }
+
+  #validateRequestAndCalculateTotals(accountId, ...ticketTypeRequests) {
     if (!accountId || accountId < 0 || !Number.isSafeInteger(accountId)) {
       this.#logErrors(`Error validating the accountId, got: ${accountId}`)
       throw new InvalidPurchaseException('A valid accountId is required')
@@ -26,43 +36,52 @@ export default class TicketService {
         )
       }
 
-      if (ticketTypeRequest.getTicketType() === 'ADULT') {
-        this.#noAdultTicketPresent = false
+      switch (ticketTypeRequest.getTicketType()) {
+        case 'ADULT':
+          this.#numberOfAdultTickets += ticketTypeRequest.getNoOfTickets()
+          this.#totalToPay += this.#numberOfAdultTickets * PRICES.ADULT
+          break
+        case 'CHILD':
+          this.#numberOfChildTickets += ticketTypeRequest.getNoOfTickets()
+          this.#totalToPay += this.#numberOfChildTickets * PRICES.CHILD
+          break
+        case 'INFANT':
+          this.#numberOfInfantTickets += ticketTypeRequest.getNoOfTickets()
+          this.#totalToPay += this.#numberOfChildTickets * PRICES.INFANT
+          break
+        default:
+          break
       }
-
-      this.#ticketsCount += ticketTypeRequest.getNoOfTickets()
     }
 
-    if (this.#noAdultTicketPresent) {
+    if (this.#numberOfAdultTickets === 0) {
       throw new InvalidPurchaseException(
         'At least one adult ticket must be purchased'
       )
     }
 
-    if (this.#ticketsCount > MAX_NUMBER_OF_TICKETS) {
+    if (
+      this.#numberOfAdultTickets +
+        this.#numberOfChildTickets +
+        this.#numberOfInfantTickets >
+      MAX_NUMBER_OF_TICKETS
+    ) {
       throw new InvalidPurchaseException(
-        // this is a hard guess, the limit is per transaction not customerId
-        // but ideally we'll want to enforce per customer and event/show
-        // TODO: check with PO to confirm ^
         `The maximum number of tickets that can be purchased was exceeded. Max allowed:${MAX_NUMBER_OF_TICKETS}, requested:${
-          this.#ticketsCount
+          this.#numberOfAdultTickets +
+          this.#numberOfChildTickets +
+          this.#numberOfInfantTickets
         }`
       )
     }
 
-    // call the payment service
-    this.#paymentService.makePayment(
-      accountId,
-      this.#calculateTotal(...ticketTypeRequests)
-    )
-  }
-
-  #calculateTotal(...ticketTypeRequests) {
-    return ticketTypeRequests.reduce(
-      (acc, ticket) =>
-        (acc += PRICES[ticket.getTicketType()] * ticket.getNoOfTickets()),
-      0
-    )
+    if (this.#numberOfAdultTickets < this.#numberOfInfantTickets) {
+      throw new InvalidPurchaseException(
+        `There are more infants(${this.#numberOfInfantTickets}) than adults(${
+          this.#numberOfAdultTickets
+        })`
+      )
+    }
   }
 
   // TODO: replace with an adequate logger/service

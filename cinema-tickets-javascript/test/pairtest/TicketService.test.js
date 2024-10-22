@@ -95,6 +95,18 @@ describe('TicketService', () => {
         )
         expect(t).toThrow(InvalidPurchaseException)
       })
+
+      it('should throw InvalidPurchaseException if more infants than adults', () => {
+        const t = () =>
+          ticketService.purchaseTickets(
+            accountId,
+            SINGLE_ADULT_TICKET,
+            FIVE_INFANT_TICKETS
+          )
+
+        expect(t).toThrow('There are more infants(5) than adults(1)')
+        expect(t).toThrow(InvalidPurchaseException)
+      })
     })
   })
 
