@@ -4,6 +4,7 @@ import TicketPaymentService from '../thirdparty/paymentgateway/TicketPaymentServ
 import { PRICES, MAX_NUMBER_OF_TICKETS } from './ticketServiceConfig.js'
 export default class TicketService {
   #paymentService = new TicketPaymentService()
+
   #numberOfInfantTickets = 0
   #numberOfChildTickets = 0
   #numberOfAdultTickets = 0
@@ -11,13 +12,19 @@ export default class TicketService {
 
   purchaseTickets(accountId, ...ticketTypeRequests) {
     // validate the request
-    this.#validateRequestAndCalculateTotals(accountId, ...ticketTypeRequests)
+    this.#validateRequest(accountId, ticketTypeRequests)
+
+    // calculate totals
+    this.#calculateTotals(ticketTypeRequests)
+
+    // validate business logic
+    this.#validateBusinessLogic()
 
     // call the payment service
     this.#paymentService.makePayment(accountId, this.#totalToPay)
   }
 
-  #validateRequestAndCalculateTotals(accountId, ...ticketTypeRequests) {
+  #validateRequest(accountId, ticketTypeRequests) {
     if (!accountId || accountId < 0 || !Number.isSafeInteger(accountId)) {
       this.#logErrors(`Error validating the accountId, got: ${accountId}`)
       throw new InvalidPurchaseException('A valid accountId is required')
@@ -35,7 +42,11 @@ export default class TicketService {
           'ticketTypeRequests must be an instance of TicketTypeRequest'
         )
       }
+    }
+  }
 
+  #calculateTotals(ticketTypeRequests) {
+    for (const ticketTypeRequest of ticketTypeRequests) {
       switch (ticketTypeRequest.getTicketType()) {
         case 'ADULT':
           this.#numberOfAdultTickets += ticketTypeRequest.getNoOfTickets()
@@ -53,7 +64,9 @@ export default class TicketService {
           break
       }
     }
+  }
 
+  #validateBusinessLogic() {
     if (this.#numberOfAdultTickets === 0) {
       throw new InvalidPurchaseException(
         'At least one adult ticket must be purchased'
