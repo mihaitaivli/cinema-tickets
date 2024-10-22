@@ -40,11 +40,21 @@ export default class TicketService {
     }
 
     if (!ticketTypeRequests.length) {
+      this.#logError(
+        `Error validating the ticketTypeRequests, got ${JSON.stringify(
+          ticketTypeRequests
+        )}`
+      )
       this.#throwError('The array of ticketTypeRequests cannot be empty')
     }
 
     for (const ticketTypeRequest of ticketTypeRequests) {
       if (!(ticketTypeRequest instanceof TicketTypeRequest)) {
+        this.#logError(
+          `Error validating the ticketTypeRequest, got ${JSON.stringify(
+            ticketTypeRequests
+          )}`
+        )
         this.#throwError(
           'ticketTypeRequests must be an instance of TicketTypeRequest'
         )
@@ -75,6 +85,7 @@ export default class TicketService {
 
   #validateBusinessLogic() {
     if (this.#numberOfAdultTickets === 0) {
+      this.#logError(`Error validating business logic, got zero adult tickets`)
       this.#throwError('At least one adult ticket must be purchased')
     }
 
@@ -84,21 +95,25 @@ export default class TicketService {
         this.#numberOfInfantTickets >
       MAX_NUMBER_OF_TICKETS
     ) {
-      this.#throwError(
-        `The maximum number of tickets that can be purchased was exceeded. Max allowed:${MAX_NUMBER_OF_TICKETS}, requested:${
+      this.#logError(
+        `Error validating business logic, got ${
           this.#numberOfAdultTickets +
           this.#numberOfChildTickets +
           this.#numberOfInfantTickets
-        }`
+        } total number of tickets compared to max allowed ${MAX_NUMBER_OF_TICKETS}`
+      )
+      this.#throwError(
+        `The maximum number of tickets that can be purchased was exceeded. Max allowed: ${MAX_NUMBER_OF_TICKETS}`
       )
     }
 
     if (this.#numberOfAdultTickets < this.#numberOfInfantTickets) {
-      this.#throwError(
-        `There are more infants(${this.#numberOfInfantTickets}) than adults(${
-          this.#numberOfAdultTickets
-        })`
+      this.#logError(
+        `Error validating business logic, got more infant tickets (${
+          this.#numberOfInfantTickets
+        }) than adult tickets (${this.#numberOfAdultTickets})`
       )
+      this.#throwError(`There are more infant tickets than adult tickets`)
     }
   }
 

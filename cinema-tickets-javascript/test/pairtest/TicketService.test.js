@@ -92,7 +92,7 @@ describe('TicketService', () => {
           ticketService.purchaseTickets(accountId, ...moreTicketsThanMaxAllowed)
 
         expect(t).toThrow(
-          `The maximum number of tickets that can be purchased was exceeded. Max allowed:${MAX_NUMBER_OF_TICKETS}, requested:${moreTicketsThanMaxAllowed.length}`
+          `The maximum number of tickets that can be purchased was exceeded. Max allowed: ${MAX_NUMBER_OF_TICKETS}`
         )
         expect(t).toThrow(InvalidPurchaseException)
       })
@@ -105,7 +105,7 @@ describe('TicketService', () => {
             FIVE_INFANT_TICKETS
           )
 
-        expect(t).toThrow('There are more infants(5) than adults(1)')
+        expect(t).toThrow('There are more infant tickets than adult tickets')
         expect(t).toThrow(InvalidPurchaseException)
       })
     })
