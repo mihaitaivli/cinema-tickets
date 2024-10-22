@@ -6,6 +6,7 @@ import {
   MAX_NUMBER_OF_TICKETS,
 } from '../../src/pairtest/ticketServiceConfig.js'
 import TicketPaymentService from '../../src/thirdparty/paymentgateway/TicketPaymentService.js'
+import SeatReservationService from '../../src/thirdparty/seatbooking/SeatReservationService.js'
 
 const SINGLE_INFANT_TICKET = new TicketTypeRequest('INFANT', 1)
 const SINGLE_CHILD_TICKET = new TicketTypeRequest('CHILD', 1)
@@ -162,6 +163,57 @@ describe('TicketService', () => {
 
         expect(spy).toHaveBeenCalledTimes(1)
         expect(spy).toHaveBeenCalledWith(accountId, expectedAmount)
+      })
+    })
+
+    describe('should call the seatReservationService with the correct number of seats', () => {
+      beforeEach(() => {
+        spy = jest.spyOn(SeatReservationService.prototype, 'reserveSeat')
+      })
+
+      afterEach(() => {
+        spy.mockRestore()
+      })
+
+      it('for an adult', () => {
+        ticketService.purchaseTickets(accountId, SINGLE_ADULT_TICKET)
+
+        expect(spy).toHaveBeenCalledTimes(1)
+        expect(spy).toHaveBeenCalledWith(accountId, 1)
+      })
+
+      it('for an adult and an infant', () => {
+        ticketService.purchaseTickets(
+          accountId,
+          SINGLE_ADULT_TICKET,
+          SINGLE_INFANT_TICKET
+        )
+
+        expect(spy).toHaveBeenCalledTimes(1)
+        expect(spy).toHaveBeenCalledWith(accountId, 1)
+      })
+
+      it('for an adult and a child', () => {
+        ticketService.purchaseTickets(
+          accountId,
+          SINGLE_ADULT_TICKET,
+          SINGLE_CHILD_TICKET
+        )
+
+        expect(spy).toHaveBeenCalledTimes(1)
+        expect(spy).toHaveBeenCalledWith(accountId, 2)
+      })
+
+      it('for a combination of adults, children and infants', () => {
+        ticketService.purchaseTickets(
+          accountId,
+          FIVE_ADULT_TICKET,
+          THREE_CHILD_TICKETS,
+          FIVE_INFANT_TICKETS
+        )
+
+        expect(spy).toHaveBeenCalledTimes(1)
+        expect(spy).toHaveBeenCalledWith(accountId, 8)
       })
     })
   })
